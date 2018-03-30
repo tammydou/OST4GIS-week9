@@ -49,7 +49,7 @@ Task 1: Use Mapbox's 'Search' API to 'geocode' information from your input
 
 The docs: https://www.mapbox.com/api-documentation/#geocoding
 (For this first task, the URL pattern you'll want to produce looks like this:
-`https://api.mapbox.com/geocoding/v5/mapbox.places/{geocode_this}.json?access_token={your_mapbox_token}`)
+`https://api.mapbox.com/geocoding/v5/mapbox.places/{University of Pennsylvania}.json?access_token={pk.eyJ1IjoidGFtbXlkb3UiLCJhIjoiY2pmNGNlOGZlMG0zMDJ3bzFpd3k0aDZ6dCJ9.5Zp0iaGaykwdujvuM8KL6w}`)
 
 You might note that this task is slightly underspecified: there are multiple different
 ways to transform text into an address. For the lab, the simplest form of geocoding
@@ -117,7 +117,7 @@ Task 6 (stretch): See if you can refocus the map to roughly the bounding box of 
 
 
 ===================== */
-
+/*pk.eyJ1IjoidGFtbXlkb3UiLCJhIjoiY2pmNGNlOGZlMG0zMDJ3bzFpd3k0aDZ6dCJ9.5Zp0iaGaykwdujvuM8KL6w*/
 var state = {
   position: {
     marker: null,
@@ -144,11 +144,16 @@ var updatePosition = function(lat, lng, updated) {
   goToOrigin(lat, lng);
 };
 
+var start=[];
+
 $(document).ready(function() {
   /* This 'if' check allows us to safely ask for the user's current position */
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(function(position) {
       updatePosition(position.coords.latitude, position.coords.longitude, position.timestamp);
+      start.lat=position.coords.latitude;
+      start.lng=position.coords.longitude;
+      console.log(start);
     });
   } else {
     alert("Unable to access geolocation API!");
@@ -170,8 +175,44 @@ $(document).ready(function() {
   $("#calculate").click(function(e) {
     var dest = $('#dest').val();
     console.log(dest);
+
+    var url;
+    url='https://api.mapbox.com/geocoding/v5/mapbox.places/'+dest+'.json?limit=1&access_token=pk.eyJ1IjoidGFtbXlkb3UiLCJhIjoiY2pmNGNlOGZlMG0zMDJ3bzFpd3k0aDZ6dCJ9.5Zp0iaGaykwdujvuM8KL6w';
+    console.log(url);
+
+    var oneEnd;
+    var end=[];
+    var route;
+    var oneRoute;
+
+
+    $.ajax(url).done(function(data){
+      console.log(data);
+      // _.each(data.features,function(point){
+        oneEnd=L.circleMarker([data.features[0].center[1],data.features[0].center[0]],{color:'red'}).addTo(map);
+        console.log(oneEnd);
+        end.push(oneEnd);
+        routeurl='https://api.mapbox.com/directions/v5/mapbox/cycling/'+start.lng+','+start.lat+';'+data.features[0].center[0]+','+data.features[0].center[1]+'?access_token=pk.eyJ1IjoidGFtbXlkb3UiLCJhIjoiY2pmNGNlOGZlMG0zMDJ3bzFpd3k0aDZ6dCJ9.5Zp0iaGaykwdujvuM8KL6w';
+        console.log(routeurl);
+        $.ajax(routeurl).done(function(rou){
+          console.log(rou);
+          oneRoute=rou.routes[0].geometry;
+          console.log(oneRoute);
+          oneRoute=decode(oneRoute);
+          console.log(oneRoute);
+          var newRoute=[];
+          _.each(oneRoute,function(arr){
+            var array;
+            // array=arr[0];
+            // arr[0]=arr[1];
+            // arr[1]=array;
+            newRoute.push(arr[1],arr[0]);
+            console.log(arr);
+          });
+          // var way = turf.lineString(oneRoute);
+
+          L.polyline(oneRoute,{color:"green"}).addTo(map);
+        });
+      });
+    });
   });
-
-});
-
-
